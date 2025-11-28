@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冰塊熱水混合計算器 (單頁版)</title>
+    <title>冰塊熱水混合計算器 (滑桿全開版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -12,12 +12,11 @@
             overflow: hidden; /* 禁止 Body 捲動 */
         }
         
-        /* 自定義滑桿樣式 - 稍微縮小以適應緊湊版面 */
         .slider-thumb::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             background: #0ea5e9;
             cursor: pointer;
             border-radius: 50%;
@@ -36,6 +35,11 @@
             user-select: none;
             touch-action: manipulation;
         }
+
+        /* 緊湊按鈕樣式 */
+        .btn-preset {
+            @apply py-1 px-1 rounded bg-slate-100 text-slate-600 text-[10px] md:text-xs font-bold hover:bg-slate-200 active:bg-slate-300 transition text-center;
+        }
     </style>
 </head>
 <body class="bg-white md:bg-blue-50/50 h-[100dvh] w-screen flex items-center justify-center text-slate-800">
@@ -43,7 +47,7 @@
     <!-- 主容器 -->
     <div class="w-full md:max-w-md bg-slate-50 h-full md:h-auto md:max-h-[95vh] md:rounded-3xl shadow-none md:shadow-2xl overflow-hidden border-0 md:border md:border-white/60 flex flex-col">
         
-        <!-- Header (更緊湊) -->
+        <!-- Header -->
         <div class="bg-sky-600 p-3 px-5 shrink-0 shadow-md flex justify-between items-center z-20">
             <div class="text-white">
                 <h1 class="text-lg font-bold flex items-center">
@@ -55,74 +59,100 @@
             </div>
         </div>
 
-        <!-- Main Content (Flex 自動分配高度) -->
-        <div class="flex-1 flex flex-col justify-evenly p-4 space-y-2 overflow-hidden">
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col justify-evenly p-3 space-y-2 overflow-hidden bg-slate-50/50">
             
-            <!-- 快速預設按鈕 (縮小高度) -->
-            <div class="grid grid-cols-3 gap-2 shrink-0">
-                <button onclick="setHotTemp(100)" class="bg-white hover:bg-red-50 text-red-700 py-2 rounded-lg text-xs md:text-sm font-bold border border-red-100 shadow-sm transition active:scale-95">100°C 沸水</button>
-                <button onclick="setHotTemp(95)" class="bg-white hover:bg-orange-50 text-orange-700 py-2 rounded-lg text-xs md:text-sm font-bold border border-orange-100 shadow-sm transition active:scale-95">95°C 熱水</button>
-                <button onclick="setHotTemp(85)" class="bg-white hover:bg-yellow-50 text-yellow-700 py-2 rounded-lg text-xs md:text-sm font-bold border border-yellow-100 shadow-sm transition active:scale-95">85°C 溫熱</button>
-            </div>
-
-            <!-- 輸入區 (更緊湊的卡片) -->
-            <div class="space-y-2 md:space-y-3 shrink-0">
+            <!-- 輸入區 (Flex Column) -->
+            <div class="space-y-2 shrink-0">
+                
                 <!-- 總水量 -->
-                <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
-                    <label class="text-xs md:text-sm font-bold text-slate-500">總水量 (cc)</label>
-                    <input type="number" inputmode="numeric" pattern="[0-9]*" id="totalVol" value="1000" class="w-24 md:w-32 bg-transparent text-right font-black text-2xl text-sky-600 outline-none border-b border-dashed border-slate-300 focus:border-sky-400" oninput="calculate()">
+                <div class="bg-white p-2.5 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center mb-1.5">
+                        <label class="text-xs font-bold text-slate-500">總水量 (cc)</label>
+                        <!-- 預設按鈕 -->
+                        <div class="flex gap-1">
+                            <button onclick="syncVol(null, 3000)" class="px-2 py-0.5 rounded bg-slate-100 text-[10px] font-bold text-slate-600 hover:bg-sky-100 hover:text-sky-600 transition">3000</button>
+                            <button onclick="syncVol(null, 2500)" class="px-2 py-0.5 rounded bg-slate-100 text-[10px] font-bold text-slate-600 hover:bg-sky-100 hover:text-sky-600 transition">2500</button>
+                            <button onclick="syncVol(null, 2000)" class="px-2 py-0.5 rounded bg-slate-100 text-[10px] font-bold text-slate-600 hover:bg-sky-100 hover:text-sky-600 transition">2000</button>
+                            <button onclick="syncVol(null, 1500)" class="px-2 py-0.5 rounded bg-slate-100 text-[10px] font-bold text-slate-600 hover:bg-sky-100 hover:text-sky-600 transition">1500</button>
+                            <button onclick="syncVol(null, 1000)" class="px-2 py-0.5 rounded bg-slate-100 text-[10px] font-bold text-slate-600 hover:bg-sky-100 hover:text-sky-600 transition">1000</button>
+                        </div>
+                    </div>
+                    <!-- 控制列：[-] [Input] [+] [Slider] -->
+                    <div class="flex items-center gap-2 mb-1">
+                        <button onclick="adjustVol(-100)" class="w-8 h-8 rounded-full bg-slate-50 text-slate-500 hover:bg-slate-100 font-bold active:bg-slate-200 border border-slate-100 shrink-0">-</button>
+                        <!-- 統一所有 Input 寬度為 w-20 以確保 + 按鈕垂直對齊 -->
+                        <input type="number" inputmode="numeric" pattern="[0-9]*" id="totalVol" value="1000" class="w-20 bg-transparent text-center font-black text-xl text-sky-600 outline-none border-b border-dashed border-slate-200 focus:border-sky-400 shrink-0" oninput="syncVol(this.value, null, true)">
+                        <button onclick="adjustVol(100)" class="w-8 h-8 rounded-full bg-slate-50 text-slate-500 hover:bg-slate-100 font-bold active:bg-slate-200 border border-slate-100 shrink-0">+</button>
+                        <!-- 新增拉桿：500~10000, step 100 -->
+                        <input type="range" id="volSlider" min="500" max="10000" step="100" value="1000" class="flex-1 h-1.5 bg-sky-100 rounded-lg appearance-none cursor-pointer slider-thumb" style="accent-color: #0ea5e9;" oninput="syncVol(this.value)">
+                    </div>
                 </div>
 
                 <!-- 目標溫度 -->
-                <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
-                    <div class="flex justify-between items-center mb-2">
-                        <label class="text-xs md:text-sm font-bold text-slate-500">目標溫度</label>
-                        <div class="flex items-center gap-2">
-                            <button onclick="adjustTemp('target', -1)" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold active:bg-slate-300">-</button>
-                            <input type="number" inputmode="numeric" id="targetTempInput" value="75" class="w-16 text-center font-black text-2xl text-slate-700 outline-none bg-transparent" oninput="syncTemp('target', this.value, true)">
-                            <button onclick="adjustTemp('target', 1)" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold active:bg-slate-300">+</button>
+                <div class="bg-white p-2.5 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="text-xs font-bold text-slate-500">目標溫度</label>
+                        <!-- 預設按鈕 -->
+                        <div class="flex gap-1">
+                            <button onclick="syncTemp('target', 80)" class="px-3 py-0.5 rounded bg-slate-100 text-[10px] font-bold text-slate-600 hover:bg-sky-100 hover:text-sky-600 transition">80°</button>
+                            <button onclick="syncTemp('target', 75)" class="px-3 py-0.5 rounded bg-slate-100 text-[10px] font-bold text-slate-600 hover:bg-sky-100 hover:text-sky-600 transition">75°</button>
+                            <button onclick="syncTemp('target', 70)" class="px-3 py-0.5 rounded bg-slate-100 text-[10px] font-bold text-slate-600 hover:bg-sky-100 hover:text-sky-600 transition">70°</button>
                         </div>
                     </div>
-                    <input type="range" id="targetTempSlider" min="10" max="90" value="75" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer slider-thumb" oninput="syncTemp('target', this.value)">
+                    <div class="flex items-center gap-2 mb-2">
+                        <button onclick="adjustTemp('target', -1)" class="w-8 h-8 rounded-full bg-slate-50 text-slate-500 hover:bg-slate-100 font-bold active:bg-slate-200 border border-slate-100 shrink-0">-</button>
+                        <!-- 統一 Input 寬度 w-20 -->
+                        <input type="number" inputmode="numeric" id="targetTempInput" value="75" class="w-20 text-center font-black text-xl text-slate-700 outline-none bg-transparent shrink-0" oninput="syncTemp('target', this.value, true)">
+                        <button onclick="adjustTemp('target', 1)" class="w-8 h-8 rounded-full bg-slate-50 text-slate-500 hover:bg-slate-100 font-bold active:bg-slate-200 border border-slate-100 shrink-0">+</button>
+                        <input type="range" id="targetTempSlider" min="10" max="90" value="75" class="flex-1 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer slider-thumb" oninput="syncTemp('target', this.value)">
+                    </div>
                 </div>
 
                 <!-- 熱水溫度 -->
-                <div class="bg-red-50/50 p-3 rounded-xl shadow-sm border border-red-100">
-                    <div class="flex justify-between items-center mb-2">
-                        <label class="text-xs md:text-sm font-bold text-red-400">熱水溫度</label>
-                        <div class="flex items-center gap-2">
-                            <button onclick="adjustTemp('hot', -1)" class="w-8 h-8 rounded-full bg-white text-red-400 hover:bg-red-50 font-bold shadow-sm active:bg-red-100">-</button>
-                            <input type="number" inputmode="numeric" id="hotTempInput" value="95" class="w-16 text-center font-black text-2xl text-red-500 outline-none bg-transparent" oninput="syncTemp('hot', this.value, true)">
-                            <button onclick="adjustTemp('hot', 1)" class="w-8 h-8 rounded-full bg-white text-red-400 hover:bg-red-50 font-bold shadow-sm active:bg-red-100">+</button>
+                <div class="bg-red-50/50 p-2.5 rounded-xl shadow-sm border border-red-100">
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="text-xs font-bold text-red-400">熱水溫度</label>
+                        <!-- 預設按鈕 -->
+                        <div class="flex gap-1">
+                            <button onclick="setHotTemp(100)" class="px-2 py-0.5 rounded bg-white text-[10px] font-bold text-red-500 border border-red-100 hover:bg-red-50 transition">100°</button>
+                            <button onclick="setHotTemp(95)" class="px-2 py-0.5 rounded bg-white text-[10px] font-bold text-red-500 border border-red-100 hover:bg-red-50 transition">95°</button>
+                            <button onclick="setHotTemp(90)" class="px-2 py-0.5 rounded bg-white text-[10px] font-bold text-red-500 border border-red-100 hover:bg-red-50 transition">90°</button>
                         </div>
                     </div>
-                    <input type="range" id="hotTempSlider" min="40" max="100" value="95" class="w-full h-1.5 bg-red-200 rounded-lg appearance-none cursor-pointer slider-thumb" style="accent-color: #ef4444;" oninput="syncTemp('hot', this.value)">
+                    <div class="flex items-center gap-2 mb-1">
+                        <button onclick="adjustTemp('hot', -1)" class="w-8 h-8 rounded-full bg-white text-red-400 hover:bg-red-50 font-bold shadow-sm active:bg-red-100 shrink-0">-</button>
+                        <!-- 統一 Input 寬度 w-20 -->
+                        <input type="number" inputmode="numeric" id="hotTempInput" value="95" class="w-20 text-center font-black text-xl text-red-500 outline-none bg-transparent shrink-0" oninput="syncTemp('hot', this.value, true)">
+                        <button onclick="adjustTemp('hot', 1)" class="w-8 h-8 rounded-full bg-white text-red-400 hover:bg-red-50 font-bold shadow-sm active:bg-red-100 shrink-0">+</button>
+                        <input type="range" id="hotTempSlider" min="40" max="100" value="95" class="flex-1 h-1.5 bg-red-200 rounded-lg appearance-none cursor-pointer slider-thumb" style="accent-color: #ef4444;" oninput="syncTemp('hot', this.value)">
+                    </div>
                 </div>
             </div>
 
             <!-- 結果顯示區 (自動填滿剩餘空間) -->
-            <div id="resultBox" class="bg-gradient-to-br from-white to-sky-50 rounded-2xl p-4 shadow-lg border border-sky-100 relative overflow-hidden flex flex-col justify-center shrink-0 min-h-[140px]">
+            <div id="resultBox" class="bg-gradient-to-br from-white to-sky-50 rounded-2xl p-4 shadow-lg border border-sky-100 relative overflow-hidden flex flex-col justify-center shrink-0 min-h-[130px]">
                 
                 <div class="grid grid-cols-2 gap-2 text-center items-end">
-                    <div class="p-2">
-                        <div class="text-sky-400 text-[10px] md:text-xs font-bold uppercase mb-1">冰塊 (0°C)</div>
-                        <div class="text-4xl md:text-4xl font-black text-sky-600 tracking-tighter leading-none" id="iceResult">0</div>
-                        <div class="text-xs text-slate-400 mt-1">公克 (g)</div>
+                    <div class="p-1">
+                        <div class="text-sky-400 text-[10px] font-bold uppercase mb-0.5">冰塊 (0°C)</div>
+                        <div class="text-4xl font-black text-sky-600 tracking-tighter leading-none" id="iceResult">0</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">公克 (g)</div>
                     </div>
-                    <div class="p-2 border-l border-slate-100">
-                        <div class="text-red-400 text-[10px] md:text-xs font-bold uppercase mb-1">熱水</div>
-                        <div class="text-4xl md:text-4xl font-black text-red-600 tracking-tighter leading-none" id="waterResult">0</div>
-                        <div class="text-xs text-slate-400 mt-1">毫升 (cc)</div>
+                    <div class="p-1 border-l border-slate-100">
+                        <div class="text-red-400 text-[10px] font-bold uppercase mb-0.5">熱水</div>
+                        <div class="text-4xl font-black text-red-600 tracking-tighter leading-none" id="waterResult">0</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">毫升 (cc)</div>
                     </div>
                 </div>
                 
                 <!-- 比例視覺化 -->
-                <div class="mt-4 h-3 bg-slate-100 rounded-full overflow-hidden flex shadow-inner border border-slate-200 relative w-full">
+                <div class="mt-3 h-2.5 bg-slate-100 rounded-full overflow-hidden flex shadow-inner border border-slate-200 relative w-full">
                     <div id="iceBar" class="h-full bg-sky-400 transition-all duration-300 ease-out" style="width: 0%"></div>
                     <div id="waterBar" class="h-full bg-red-400 transition-all duration-300 ease-out" style="width: 0%"></div>
                 </div>
                 
-                <!-- 錯誤訊息提示 (絕對定位覆蓋) -->
+                <!-- 錯誤訊息提示 -->
                 <div id="errorMsg" class="hidden absolute inset-0 bg-white/95 backdrop-blur-sm flex items-center justify-center text-red-600 text-sm font-bold z-20 rounded-2xl border-2 border-red-100">
                     <div class="text-center px-4">
                         <i class="fas fa-exclamation-triangle text-2xl mb-2 block"></i>
@@ -130,6 +160,8 @@
                     </div>
                 </div>
             </div>
+            
+            <div class="text-[10px] text-slate-300 text-center pb-1">Design for Mobile • 物理混合模擬</div>
 
         </div>
     </div>
@@ -140,6 +172,41 @@
         
         function setHotTemp(temp) {
             syncTemp('hot', temp);
+        }
+
+        // 新增：同步總水量 (Input <-> Slider <-> Buttons)
+        function syncVol(val, directVal = null, fromInput = false) {
+            let numVal;
+            if (directVal !== null) {
+                numVal = directVal;
+            } else {
+                numVal = parseInt(val);
+            }
+
+            if (isNaN(numVal)) return;
+
+            // 限制範圍 (Slider 範圍)
+            if (numVal < 500) numVal = 500;
+            if (numVal > 10000) numVal = 10000;
+
+            const input = document.getElementById('totalVol');
+            const slider = document.getElementById('volSlider');
+
+            // 避免輸入時游標跳動，只有非 input 來源才更新 input value
+            if (!fromInput) {
+                input.value = numVal;
+            }
+            slider.value = numVal;
+            
+            calculate();
+        }
+
+        // 調整總水量按鈕
+        function adjustVol(delta) {
+            const input = document.getElementById('totalVol');
+            let val = parseInt(input.value) || 0;
+            val += delta;
+            syncVol(null, val);
         }
 
         function adjustTemp(type, delta) {
@@ -182,7 +249,7 @@
                 errorMsg.classList.add('hidden');
             }
 
-            // 熱平衡公式: Mass_ice * (80 + Target) = Mass_hot * (Hot - Target)
+            // 熱平衡公式
             const A = LATENT_HEAT_ICE + targetTemp;
             const B = hotTemp - targetTemp;
             
